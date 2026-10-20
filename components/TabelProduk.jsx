@@ -1,7 +1,16 @@
+import Link from "next/link";
 import { formatRupiah } from "@/lib/format";
 import Tombol from "@/components/Tombol";
 
-export default function TabelProduk({ daftarProduk }) {
+export default function TabelProduk({ daftarProduk = [] }) {
+  if (!daftarProduk || daftarProduk.length === 0) {
+    return (
+      <div className="rounded-2xl border border-garis bg-latar p-8 text-center text-teks-lembut">
+        <p>Belum ada produk.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-x-auto rounded-2xl border border-garis">
       <table className="w-full min-w-[560px] text-left text-sm">
@@ -20,11 +29,20 @@ export default function TabelProduk({ daftarProduk }) {
             <tr key={produk.id} className="border-t border-garis">
               <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <img src={produk.foto_url} alt="" className="h-10 w-10 rounded-md object-cover" />
-                  <span className="font-semibold">{produk.nama}</span>
+                  <img
+                    src={produk.foto_url || "/placeholder.svg"}
+                    alt={produk.nama || "Foto produk"}
+                    className="h-10 w-10 rounded-md bg-permukaan object-cover"
+                  />
+                  <Link
+                    href={`/produk/${produk.id}`}
+                    className="font-semibold hover:text-utama hover:underline"
+                  >
+                    {produk.nama}
+                  </Link>
                 </div>
               </td>
-              <td className="px-4 py-3 text-teks-lembut">{produk.kategori}</td>
+              <td className="px-4 py-3 text-teks-lembut">{produk.kategori || "-"}</td>
               <td className="px-4 py-3">{formatRupiah(produk.harga)}</td>
               <td className="px-4 py-3">
                 <div className="flex justify-end gap-2">
