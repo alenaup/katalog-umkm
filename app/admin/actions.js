@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSessionClient } from "@/lib/supabase/session";
 
@@ -119,3 +120,158 @@ export async function gantiPassword(prevState, formData) {
 export async function ubahPassword(prevState, formData) {
   return gantiPassword(prevState, formData);
 }
+
+/**
+ * Menambahkan produk baru ke tabel "produk" di Supabase (US-08).
+ * Terlindungi autentikasi di server.
+ */
+export async function tambahProduk(prevState, formData) {
+  const data =
+    formData instanceof FormData
+      ? formData
+      : prevState instanceof FormData
+      ? prevState
+      : null;
+
+  const nama = data ? data.get("nama") : null;
+  const hargaRaw = data ? data.get("harga") : null;
+  const kategori = data ? data.get("kategori") : null;
+  const fotoUrl = data ? data.get("foto_url") : null;
+  const deskripsi = data ? data.get("deskripsi") : null;
+
+  // Validasi input
+  if (!nama || !String(nama).trim()) {
+    return { error: "Nama produk wajib diisi." };
+  }
+
+  if (hargaRaw === null || hargaRaw === "" || isNaN(Number(hargaRaw))) {
+    return { error: "Harga harus berupa angka yang valid." };
+  }
+
+  const harga = Number(hargaRaw);
+  if (harga < 0) {
+    return { error: "Harga tidak boleh negatif." };
+  }
+
+  // Wajib periksa login di server sebelum mengubah data (AGENTS.md #3, US-08)
+  const supabase = await createSessionClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return {
+      error: "Aksi ditolak: Anda harus login sebagai admin.",
+    };
+  }
+
+  const insertData = {
+    nama: String(nama).trim(),
+    harga: Math.round(harga),
+    kategori:
+      kategori && String(kategori).trim() !== ""
+        ? String(kategori).trim()
+        : null,
+    foto_url:
+      fotoUrl && String(fotoUrl).trim() !== "" ? String(fotoUrl).trim() : null,
+    deskripsi:
+      deskripsi && String(deskripsi).trim() !== ""
+        ? String(deskripsi).trim()
+        : null,
+  };
+
+  const { error: insertError } = await supabase
+    .from("produk")
+    .insert(insertData);
+
+  if (insertError) {
+    return { error: `Gagal menyimpan produk: ${insertError.message}` };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  redirect("/admin");
+}
+
+export async function simpanProduk(prevState, formData) {
+  return tambahProduk(prevState, formData);
+}
+
+/**
+ * Menambahkan produk baru ke tabel "produk" di Supabase (US-08).
+ * Terlindungi autentikasi di server.
+ */
+export async function tambahProduk(prevState, formData) {
+  const data =
+    formData instanceof FormData
+      ? formData
+      : prevState instanceof FormData
+      ? prevState
+      : null;
+
+  const nama = data ? data.get("nama") : null;
+  const hargaRaw = data ? data.get("harga") : null;
+  const kategori = data ? data.get("kategori") : null;
+  const fotoUrl = data ? data.get("foto_url") : null;
+  const deskripsi = data ? data.get("deskripsi") : null;
+
+  // Validasi input
+  if (!nama || !String(nama).trim()) {
+    return { error: "Nama produk wajib diisi." };
+  }
+
+  if (hargaRaw === null || hargaRaw === "" || isNaN(Number(hargaRaw))) {
+    return { error: "Harga harus berupa angka yang valid." };
+  }
+
+  const harga = Number(hargaRaw);
+  if (harga < 0) {
+    return { error: "Harga tidak boleh negatif." };
+  }
+
+  // Wajib periksa login di server sebelum mengubah data (AGENTS.md #3, US-08)
+  const supabase = await createSessionClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return {
+      error: "Aksi ditolak: Anda harus login sebagai admin.",
+    };
+  }
+
+  const insertData = {
+    nama: String(nama).trim(),
+    harga: Math.round(harga),
+    kategori:
+      kategori && String(kategori).trim() !== ""
+        ? String(kategori).trim()
+        : null,
+    foto_url:
+      fotoUrl && String(fotoUrl).trim() !== "" ? String(fotoUrl).trim() : null,
+    deskripsi:
+      deskripsi && String(deskripsi).trim() !== ""
+        ? String(deskripsi).trim()
+        : null,
+  };
+
+  const { error: insertError } = await supabase
+    .from("produk")
+    .insert(insertData);
+
+  if (insertError) {
+    return { error: `Gagal menyimpan produk: ${insertError.message}` };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  redirect("/admin");
+}
+
+export async function simpanProduk(prevState, formData) {
+  return tambahProduk(prevState, formData);
+}
+
