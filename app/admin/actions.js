@@ -48,6 +48,24 @@ export async function keluarAdmin() {
   return keluar();
 }
 
+/**
+ * Memastikan pengguna sudah login di server sebelum menjalankan aksi mutasi.
+ * Memenuhi AGENTS.md aturan keamanan #3 dan kriteria US-06.
+ */
+export async function requireAuth() {
+  const supabase = await createSessionClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    throw new Error("Aksi ditolak: Anda harus login sebagai admin.");
+  }
+
+  return { supabase, user };
+}
+
 export async function gantiPassword(prevState, formData) {
   const data =
     formData instanceof FormData
@@ -74,6 +92,7 @@ export async function gantiPassword(prevState, formData) {
     return { error: "Password baru dan konfirmasi password tidak sama." };
   }
 
+  // Wajib periksa login di server sebelum mengubah data
   const supabase = await createSessionClient();
   const {
     data: { user },
