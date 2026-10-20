@@ -48,3 +48,55 @@ export async function keluarAdmin() {
   return keluar();
 }
 
+export async function gantiPassword(prevState, formData) {
+  const data =
+    formData instanceof FormData
+      ? formData
+      : prevState instanceof FormData
+      ? prevState
+      : null;
+
+  const passwordBaru = data ? data.get("password_baru") : null;
+  const konfirmasiPassword = data ? data.get("konfirmasi_password") : null;
+
+  if (!passwordBaru || !konfirmasiPassword) {
+    return { error: "Semua kolom password wajib diisi." };
+  }
+
+  const strPassword = String(passwordBaru);
+  const strKonfirmasi = String(konfirmasiPassword);
+
+  if (strPassword.length < 8) {
+    return { error: "Password baru minimal 8 karakter." };
+  }
+
+  if (strPassword !== strKonfirmasi) {
+    return { error: "Password baru dan konfirmasi password tidak sama." };
+  }
+
+  const supabase = await createSessionClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return {
+      error: "Kamu belum login atau sesi telah berakhir. Silakan login kembali.",
+    };
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password: strPassword,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true, message: "Password berhasil diganti." };
+}
+
+export async function ubahPassword(prevState, formData) {
+  return gantiPassword(prevState, formData);
+}
